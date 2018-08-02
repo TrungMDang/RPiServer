@@ -1,3 +1,47 @@
+To run:
+- Clone the repository and cd to app name folder.
+- Run `npm install` to install node_modules folder
+- There are 2 ways I run this app:
+    - Run `npm start` for developmental version. This opens a new terminal. The terminal will tell how to access the app. If the terminal is closed, the app will close.
+    - Run the app as a service: You can use pm2 to manage the app and automatically restart it if it crashes. For my case, I use NGINX for proxy server. You will have to modify the NGINX configuration file to tell it to forward traffic from Your.Pi.ipv4.Address to the actual app. How to do:
+      - Once npm is finished installing (previous step above), cd up one level to the root folder which contains the app folder.
+      - Add a text file named with Your.Pi.ipv4.Address (run `ifconfig` on Pi terminal to see) to `/etc/nginx/sites-enabled/`. Inside the text file, add the following block:
+        ```
+        server {
+            listen 80;
+	          server_name Your.Pi.ipv4.Address;
+	
+            location ^~ /YourAppName/{
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded_For $proxy_add_x_forwarded_for;
+              proxy_set_header Host $http_host;
+              proxy_set_header X-NginX-Proxy true;
+              proxy_pass	http://127.0.0.1:PORT_NUMER/;
+            }
+	
+            location ^~ /YourAwesomeAppName/{
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded_For $proxy_add_x_forwarded_for;
+              proxy_set_header Host $http_host;
+              proxy_set_header X-NginX-Proxy true;
+              proxy_pass	http://127.0.0.1:PORT_NUMBER/;
+	        }
+        }
+        ```  
+        Replace Your.Pi.ipv4.Address with actual address obtain from `ifconfig` command. This is tedious if you don't have a static IP address for your PI from your router because the address will change, forcing you to add multiple configuration file like 192.168.0.100, 192.168.0.200, 192.168.50.29, etc. I am not sure if I can add more than 1 server block inside a text file.
+        Replace YourAppName with your app name. You can add more if you like, just add a location block. For me, I have 2 apps that are in the same folder.
+          ``` 
+          location ^~ /AppName/ {
+
+          }
+          ``` 
+        Replace PORT_NUMBER with a port number you like.
+
+      - Run `PORT=2000 pm2 start npm --name "YourAppName" -- start`. Your terminal should be inside the root folder that contains the app folder. This will run the app at custom port `2000` with name `YourAppName`. To access this app: type in your browser: `IP Address of your Pi:PORTNAME/YourAppName`
+      - To stop the app, run `pm2 stop YourAppName`.
+      - The pm2 command can do lots of things. See its documentation/tutorials for details.
+
+****
 This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).
 
 Below you will find some information on how to perform common tasks.<br>
